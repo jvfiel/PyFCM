@@ -6,7 +6,6 @@ import requests
 
 from .errors import *
 
-
 class BaseAPI(object):
     """
     Base class for the pyfcm API wrapper for FCM
@@ -94,7 +93,6 @@ class BaseAPI(object):
                       title_loc_key=None,
                       title_loc_args=None,
                       content_available=None,
-                      remove_notification=False,
                       **extra_kwargs):
 
         """
@@ -140,149 +138,146 @@ class BaseAPI(object):
             else:
                 raise InvalidDataError("Provided data_message is in the wrong format")
 
-        fcm_payload['notification'] = {}
-        if message_icon:
-            fcm_payload['notification']['icon'] = message_icon
-        # If body is present, use it
-        if message_body:
-            fcm_payload['notification']['body'] = message_body
-        # Else use body_loc_key and body_loc_args for body
-        else:
-            if body_loc_key:
-                fcm_payload['notification']['body_loc_key'] = body_loc_key
-            if body_loc_args:
-                if isinstance(body_loc_args, list):
-                    fcm_payload['notification']['body_loc_args'] = body_loc_args
-                else:
-                    raise InvalidDataError('body_loc_args should be an array')
-        # If title is present, use it
-        if message_title:
-            fcm_payload['notification']['title'] = message_title
-        # Else use title_loc_key and title_loc_args for title
-        else:
-            if title_loc_key:
-                fcm_payload['notification']['title_loc_key'] = title_loc_key
-            if title_loc_args:
-                if isinstance(title_loc_args, list):
-                    fcm_payload['notification']['title_loc_args'] = title_loc_args
-                else:
-                    raise InvalidDataError('title_loc_args should be an array')
+        # fcm_payload['notification'] = {}
+        # if message_icon:
+        #     fcm_payload['notification']['icon'] = message_icon
+        # #If body is present, use it
+        # if message_body:
+        #     fcm_payload['notification']['body'] = message_body
+        # #Else use body_loc_key and body_loc_args for body
+        # else:
+        #     if body_loc_key:
+        #         fcm_payload['notification']['body_loc_key'] = body_loc_key
+        #     if body_loc_args:
+        #         if isinstance(body_loc_args, list):
+        #             fcm_payload['notification']['body_loc_args'] = body_loc_args
+        #         else:
+        #             raise InvalidDataError('body_loc_args should be an array')
+        #If title is present, use it
+        # if message_title:
+        #     fcm_payload['notification']['title'] = message_title
+        # #Else use title_loc_key and title_loc_args for title
+        # else:
+        #     if title_loc_key:
+        #         fcm_payload['notification']['title_loc_key'] = title_loc_key
+        #     if title_loc_args:
+        #         if isinstance(title_loc_args, list):
+        #             fcm_payload['notification']['title_loc_args'] = title_loc_args
+        #         else:
+        #             raise InvalidDataError('title_loc_args should be an array')
 
         # This is needed for iOS when we are sending only custom data messages
         if content_available and isinstance(content_available, bool):
             fcm_payload['content_available'] = content_available
 
-        if click_action:
-            fcm_payload['notification']['click_action'] = click_action
-        if badge:
-            fcm_payload['notification']['badge'] = badge
-        if color:
-            fcm_payload['notification']['color'] = color
-        if tag:
-            fcm_payload['notification']['tag'] = tag
-        # only add the 'sound' key if sound is not None
-        # otherwise a default sound will play -- even with empty string args.
-        if sound:
-            fcm_payload['notification']['sound'] = sound
+        # if click_action:
+        #     fcm_payload['notification']['click_action'] = click_action
+        # if badge:
+        #     fcm_payload['notification']['badge'] = badge
+        # if color:
+        #     fcm_payload['notification']['color'] = color
+        # if tag:
+        #     fcm_payload['notification']['tag'] = tag
+        # # only add the 'sound' key if sound is not None
+        # # otherwise a default sound will play -- even with empty string args.
+        # if sound:
+        #     fcm_payload['notification']['sound'] = sound
+        #
+        # if extra_kwargs:
+        #     fcm_payload['notification'].update(extra_kwargs)
 
-        if extra_kwargs:
-            fcm_payload['notification'].update(extra_kwargs)
 
-        # Do this if you only want to send a data message.
-        if remove_notification:
-            del fcm_payload['notification']
+        #     fcm_payload = {
+        #     "data": {
+        #         "custom_notification": {
+        #             "body": "Test body",
+        #             "color": "#00ACD4",
+        #             "priority": "high",
+        #             "show_in_foreground": true,
+        #             "title": "Test title"
+        #         },
+        #         "image": "",
+        #         "message": "Science and computer homework, pass it tomorrow 9am in the Senior high building",
+        #         "messsage_type": "HOMEWORKS",
+        #         "name": "3f14282126",
+        #         "short_message": "Assignment test Lab",
+        #         "title": "Test Lab/2017-09-19/Assignment test Lab"
+        #     },
+        #     # "notification": {
+        #     #     "body": "Assignment test Lab",
+        #     #     "sound": "default",
+        #     #     "title": "Test Lab/2017-09-19/Assignment test Lab"
+        #     # },
+        #     "priority": "high",
+        #     "to": "cnEET2mzYSY:APA91bElELr-NenJsLG2wkkU_7V4ToYCQX7-T3i2DbenVw0dtz0ifa4bGsIgA-zXKa6zMFaBVpxgtpfV7Z6rrHijpEdVUicTHjiJ_MbSOJB9ZbxwhlU525gpN_fQsMhh117Hdqw03JPm"
+        # }
+
 
         return self.json_dumps(fcm_payload)
 
-    def do_request(self, payload, timeout):
+    def do_request(self, payload):
         if self.FCM_REQ_PROXIES:
             response = requests.post(self.FCM_END_POINT, headers=self.request_headers(), data=payload,
-                                     proxies=self.FCM_REQ_PROXIES, timeout=timeout)
+                                     proxies=self.FCM_REQ_PROXIES)
         else:
-            response = requests.post(self.FCM_END_POINT, headers=self.request_headers(), data=payload, timeout=timeout)
+            response = requests.post(self.FCM_END_POINT, headers=self.request_headers(), data=payload)
         if 'Retry-After' in response.headers and int(response.headers['Retry-After']) > 0:
             sleep_time = int(response.headers['Retry-After'])
             time.sleep(sleep_time)
-            return self.do_request(payload, timeout)
+            return self.do_request(payload)
         return response
 
-    def send_request(self, payloads=None, timeout=None):
+    def send_request(self, payloads=None):
         self.send_request_responses = []
         for payload in payloads:
-            response = self.do_request(payload, timeout)
+            response = self.do_request(payload)
             self.send_request_responses.append(response)
 
-    def registration_info_request(self, registration_id):
-        """ Makes a request for registration info and returns the response
-            object
-        """
-        response = requests.get('https://iid.googleapis.com/iid/info/' + registration_id,
-                               headers=self.request_headers(),
-                               params={'details': 'true'})
-        return response
-
     def clean_registration_ids(self, registration_ids=[]):
-        """ Return list of active IDS from the list of registration_ids
+        """Return list of active IDS from the list of registration_ids
+
         """
         valid_registration_ids = []
         for registration_id in registration_ids:
-            details = self.registration_info_request(registration_id)
+            details = requests.get('https://iid.googleapis.com/iid/info/'+registration_id,
+                                   headers=self.request_headers(),
+                                   params={'details':'true'})
             if details.status_code == 200:
                 valid_registration_ids.append(registration_id)
         return valid_registration_ids
 
-    def get_registration_id_info(self, registration_id):
-        """ Returns details related to a registration id if it exists
-            otherwise return None
-        """
-        details = self.registration_info_request(registration_id)
-        if details.status_code == 200:
-            return details.json()
-        return None
-
     def parse_responses(self):
-        """
-        Returns a python dict of multicast_ids(list), success(int), failure(int), canonical_ids(int), results(list) and optional topic_message_id(str but None by default)
-        """
-        response_dict = {
-            'multicast_ids': list(),
-            'success': 0,
-            'failure': 0,
-            'canonical_ids': 0,
-            'results': list(),
-            'topic_message_id': None
-        }
-
+        response_list = list()
         for response in self.send_request_responses:
             if response.status_code == 200:
                 """
                 Parses the json response sent back by the
                 server and tries to get out the important return variables
+
+                Returns a python dict of multicast_id(long), success(int), failure(int), canonical_ids(int), results(list)
                 """
                 if 'content-length' in response.headers and int(response.headers['content-length']) <= 0:
-                    raise FCMServerError("FCM server connection error, the response is empty")
-                else:
-                    parsed_response = response.json()
+                    return {}
 
-                    multicast_id = parsed_response.get('multicast_id', None)
-                    success = parsed_response.get('success', 0)
-                    failure = parsed_response.get('failure', 0)
-                    canonical_ids = parsed_response.get('canonical_ids', 0)
-                    results = parsed_response.get('results', [])
-                    message_id = parsed_response.get('message_id', None)  # for topic messages
-                    if message_id:
-                        success = 1
-                    if multicast_id:
-                        response_dict['multicast_ids'].append(multicast_id)
-                    response_dict['success'] += success
-                    response_dict['failure'] += failure
-                    response_dict['canonical_ids'] += canonical_ids
-                    response_dict['results'].extend(results)
-                    response_dict['topic_message_id'] = message_id
+                parsed_response = response.json()
+
+                multicast_id = parsed_response.get('multicast_id', None)
+                success = parsed_response.get('success', 0)
+                failure = parsed_response.get('failure', 0)
+                canonical_ids = parsed_response.get('canonical_ids', 0)
+                results = parsed_response.get('results', [])
+                message_id = parsed_response.get('message_id', None)  # for topic messages
+                if message_id:
+                    success = 1
+                response_list.append({'multicast_id': multicast_id,
+                                      'success': success,
+                                      'failure': failure,
+                                      'canonical_ids': canonical_ids,
+                                      'results': results})
             elif response.status_code == 401:
                 raise AuthenticationError("There was an error authenticating the sender account")
             elif response.status_code == 400:
                 raise InternalPackageError(response.text)
             else:
                 raise FCMServerError("FCM server is temporarily unavailable")
-        return response_dict
+        return response_list
